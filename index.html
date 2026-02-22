@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podio Dinamico - Fabio, Wlado, Vincenzo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Indicatore di aggiornamento */
+        .status-bar {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Area del Podio */
+        .stage {
+            position: relative;
+            width: 900px; 
+            height: 600px;
+            background-image: url('podio.jpg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom center;
+        }
+
+        /* Stile universale personaggi */
+        .char {
+            position: absolute;
+            transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(100px);
+            object-fit: contain;
+            object-position: bottom;
+        }
+
+        /* Scale personalizzate dei file immagine */
+        #char-1 { height: 230px; } /* Fabio */
+        #char-2 { height: 250px; } /* Wlado */
+        #char-3 { height: 250px; } /* Vincenzo */
+
+        /* COORDINATE POSIZIONI AGGIORNATE */
+        
+        /* 1° POSTO (Centro) */
+        .pos-1 {
+            opacity: 1;
+            left: 50%;
+            bottom: 315px; 
+            margin-left: -75px;
+            transform: translateY(0) scale(1.1);
+            z-index: 10;
+        }
+
+        /* 2° POSTO (Sinistra) - Modificato: più in alto e più a destra */
+        .pos-2 {
+            opacity: 1;
+            left: 22%;       /* Spostato a destra (da 17% a 22%) */
+            bottom: 220px;   /* Alzato ulteriormente (da 195px a 220px) */
+            transform: translateY(0) scale(1);
+            z-index: 9;
+        }
+
+        /* 3° POSTO (Destra) */
+        .pos-3 {
+            opacity: 1;
+            left: 68%;
+            bottom: 115px; 
+            transform: translateY(0) scale(0.9);
+            z-index: 8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-bar" id="status">Sincronizzazione con Google Sheets...</div>
+
+    <div class="stage">
+        <img src="1.png" id="char-1" class="char" alt="Fabio">
+        <img src="2.png" id="char-2" class="char" alt="Wlado">
+        <img src="3.png" id="char-3" class="char" alt="Vincenzo">
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLOb8LZy-q4LoMWKZpslHIYVeF7UZD4imtndCw0jPRs3cWwhPk1PVfVTXLhTh2ZEzn9Q/exec";
+
+        async function updateRank() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                const players = [
+                    { id: 'char-1', score: data.fabio },
+                    { id: 'char-2', score: data.wlado },
+                    { id: 'char-3', score: data.vincenzo }
+                ];
+
+                players.sort((a, b) => b.score - a.score);
+
+                document.querySelectorAll('.char').forEach(img => {
+                    img.classList.remove('pos-1', 'pos-2', 'pos-3');
+                    img.style.opacity = "0";
+                });
+
+                players.forEach((p, index) => {
+                    if (p.score > 0) {
+                        const el = document.getElementById(p.id);
+                        el.style.opacity = "1";
+                        el.classList.add('pos-' + (index + 1));
+                    }
+                });
+
+                document.getElementById('status').innerText = "Ultimo aggiornamento: " + new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error("Errore recupero dati:", error);
+                document.getElementById('status').innerText = "Errore di connessione al foglio.";
+            }
+        }
+        
+        setInterval(updateRank, 10000);
+        updateRank();
+    </script>
+
+</body>
+</html>
