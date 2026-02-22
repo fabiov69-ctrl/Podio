@@ -35,6 +35,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: bottom center;
+            /* debug: border: 1px solid red; */
         }
 
         /* Stile universale personaggi */
@@ -52,23 +53,23 @@
         #char-2 { height: 250px; } /* Wlado */
         #char-3 { height: 250px; } /* Vincenzo */
 
-        /* COORDINATE POSIZIONI AGGIORNATE */
+        /* COORDINATE POSIZIONI PODIO (SPOSTATE PIÙ IN BASSO) */
         
         /* 1° POSTO (Centro) */
         .pos-1 {
             opacity: 1;
             left: 50%;
-            bottom: 315px; 
+            bottom: 260px; /* Abbassato da 315px */
             margin-left: -75px;
             transform: translateY(0) scale(1.1);
             z-index: 10;
         }
 
-        /* 2° POSTO (Sinistra) - Modificato: più in alto e più a destra */
+        /* 2° POSTO (Sinistra) */
         .pos-2 {
             opacity: 1;
-            left: 22%;       /* Spostato a destra (da 17% a 22%) */
-            bottom: 220px;   /* Alzato ulteriormente (da 195px a 220px) */
+            left: 22%;       
+            bottom: 170px; /* Abbassato da 220px */
             transform: translateY(0) scale(1);
             z-index: 9;
         }
@@ -77,10 +78,24 @@
         .pos-3 {
             opacity: 1;
             left: 68%;
-            bottom: 115px; 
+            bottom: 70px; /* Abbassato da 115px */
             transform: translateY(0) scale(0.9);
             z-index: 8;
         }
+
+        /* STATO ZERO (Proprio sul bordo inferiore) */
+        .pos-zero {
+            opacity: 1;
+            bottom: 0px; /* Portato al limite minimo */
+            transform: translateY(0) scale(0.75);
+            z-index: 11; /* Davanti a tutto */
+        }
+
+        /* Distribuzione orizzontale a terra */
+        #char-1.pos-zero { left: 20%; }
+        #char-2.pos-zero { left: 50%; margin-left: -60px; }
+        #char-3.pos-zero { left: 80%; margin-left: -120px; }
+
     </style>
 </head>
 <body>
@@ -107,18 +122,19 @@
                     { id: 'char-3', score: data.vincenzo }
                 ];
 
+                // Ordina per punteggio decrescente
                 players.sort((a, b) => b.score - a.score);
 
-                document.querySelectorAll('.char').forEach(img => {
-                    img.classList.remove('pos-1', 'pos-2', 'pos-3');
-                    img.style.opacity = "0";
-                });
-
                 players.forEach((p, index) => {
+                    const el = document.getElementById(p.id);
+                    el.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-zero');
+
                     if (p.score > 0) {
-                        const el = document.getElementById(p.id);
-                        el.style.opacity = "1";
                         el.classList.add('pos-' + (index + 1));
+                        el.style.opacity = "1";
+                    } else {
+                        el.classList.add('pos-zero');
+                        el.style.opacity = "1";
                     }
                 });
 
