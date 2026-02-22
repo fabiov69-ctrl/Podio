@@ -6,62 +6,65 @@
     <title>Podio Dinamico - Fabio, Wlado, Vincenzo</title>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             background-color: #f0f2f5;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+            overflow-x: hidden;
         }
 
-        /* Indicatore di aggiornamento */
+        /* Barra di stato responsiva */
         .status-bar {
             background: white;
             padding: 10px 20px;
             border-radius: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: clamp(12px, 3vw, 14px);
             color: #666;
+            z-index: 100;
         }
 
-        /* Area del Podio */
+        /* Area del Podio - Ora scala perfettamente su ogni schermo */
         .stage {
             position: relative;
-            width: 900px; 
-            height: 600px;
+            width: 100%;
+            max-width: 900px; 
+            aspect-ratio: 900 / 600; /* Mantiene le proporzioni originali */
             background-image: url('podio.jpg');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: bottom center;
-            /* debug: border: 1px solid red; */
+            margin: 0 auto;
         }
 
         /* Stile universale personaggi */
         .char {
             position: absolute;
-            transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0;
-            transform: translateY(100px);
             object-fit: contain;
             object-position: bottom;
+            /* Altezza relativa alla grandezza del podio */
+            height: 40%; 
         }
 
-        /* Scale personalizzate dei file immagine */
-        #char-1 { height: 230px; } /* Fabio */
-        #char-2 { height: 250px; } /* Wlado */
-        #char-3 { height: 250px; } /* Vincenzo */
+        /* Scale personalizzate mantenendo le proporzioni */
+        #char-1 { height: 38%; } /* Fabio */
+        #char-2 { height: 42%; } /* Wlado */
+        #char-3 { height: 42%; } /* Vincenzo */
 
-        /* COORDINATE POSIZIONI PODIO (SPOSTATE PIÙ IN BASSO) */
+        /* COORDINATE PODIO (espresse in % per la massima compatibilità mobile) */
         
         /* 1° POSTO (Centro) */
         .pos-1 {
             opacity: 1;
             left: 50%;
-            bottom: 260px; /* Abbassato da 315px */
-            margin-left: -75px;
-            transform: translateY(0) scale(1.1);
+            bottom: 43%; 
+            transform: translateX(-50%) scale(1.1);
             z-index: 10;
         }
 
@@ -69,38 +72,45 @@
         .pos-2 {
             opacity: 1;
             left: 22%;       
-            bottom: 170px; /* Abbassato da 220px */
-            transform: translateY(0) scale(1);
+            bottom: 28%;   
+            transform: translateX(-50%) scale(1);
             z-index: 9;
         }
 
         /* 3° POSTO (Destra) */
         .pos-3 {
             opacity: 1;
-            left: 68%;
-            bottom: 70px; /* Abbassato da 115px */
-            transform: translateY(0) scale(0.9);
+            left: 78%;
+            bottom: 12%; 
+            transform: translateX(-50%) scale(0.9);
             z-index: 8;
         }
 
-        /* STATO ZERO (Proprio sul bordo inferiore) */
+        /* STATO ZERO (A terra davanti al podio) */
         .pos-zero {
             opacity: 1;
-            bottom: 0px; /* Portato al limite minimo */
-            transform: translateY(0) scale(0.75);
-            z-index: 11; /* Davanti a tutto */
+            bottom: 0%; /* Radente al bordo inferiore */
+            transform: translateX(-50%) scale(0.75);
+            z-index: 15;
         }
 
-        /* Distribuzione orizzontale a terra */
+        /* Distribuzione orizzontale a terra per non sovrapporsi */
         #char-1.pos-zero { left: 20%; }
-        #char-2.pos-zero { left: 50%; margin-left: -60px; }
-        #char-3.pos-zero { left: 80%; margin-left: -120px; }
+        #char-2.pos-zero { left: 50%; }
+        #char-3.pos-zero { left: 80%; }
 
+        /* Ottimizzazione per schermi piccoli (Mobile) */
+        @media (max-width: 480px) {
+            .status-bar { padding: 8px 15px; }
+            .pos-1 { bottom: 42%; } /* Micro-aggiustamento per schermi stretti */
+            .pos-2 { left: 20%; bottom: 27%; }
+            .pos-3 { left: 80%; bottom: 11%; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="status-bar" id="status">Sincronizzazione con Google Sheets...</div>
+    <div class="status-bar" id="status">Sincronizzazione dati...</div>
 
     <div class="stage">
         <img src="1.png" id="char-1" class="char" alt="Fabio">
@@ -127,25 +137,31 @@
 
                 players.forEach((p, index) => {
                     const el = document.getElementById(p.id);
+                    
+                    // Reset classi precedenti
                     el.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-zero');
 
                     if (p.score > 0) {
+                        // Assegna posizione podio (1, 2, o 3)
                         el.classList.add('pos-' + (index + 1));
-                        el.style.opacity = "1";
                     } else {
+                        // Se il punteggio è zero, posiziona a terra
                         el.classList.add('pos-zero');
-                        el.style.opacity = "1";
                     }
+                    
+                    el.style.opacity = "1";
                 });
 
-                document.getElementById('status').innerText = "Ultimo aggiornamento: " + new Date().toLocaleTimeString();
+                document.getElementById('status').innerText = "Aggiornato: " + new Date().toLocaleTimeString();
             } catch (error) {
-                console.error("Errore recupero dati:", error);
-                document.getElementById('status').innerText = "Errore di connessione al foglio.";
+                console.error("Errore:", error);
+                document.getElementById('status').innerText = "Errore di sincronizzazione.";
             }
         }
         
+        // Aggiornamento ogni 10 secondi
         setInterval(updateRank, 10000);
+        // Esecuzione immediata al caricamento
         updateRank();
     </script>
 
