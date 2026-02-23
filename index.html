@@ -16,7 +16,6 @@
             overflow-x: hidden;
         }
 
-        /* Barra di stato responsiva */
         .status-bar {
             background: white;
             padding: 10px 20px;
@@ -28,12 +27,11 @@
             z-index: 100;
         }
 
-        /* Area del Podio - Ora scala perfettamente su ogni schermo */
         .stage {
             position: relative;
             width: 100%;
             max-width: 900px; 
-            aspect-ratio: 900 / 600; /* Mantiene le proporzioni originali */
+            aspect-ratio: 900 / 600;
             background-image: url('podio.jpg');
             background-size: contain;
             background-repeat: no-repeat;
@@ -41,70 +39,68 @@
             margin: 0 auto;
         }
 
-        /* Stile universale personaggi */
         .char {
             position: absolute;
             transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0;
             object-fit: contain;
             object-position: bottom;
-            /* Altezza relativa alla grandezza del podio */
             height: 40%; 
         }
 
-        /* Scale personalizzate mantenendo le proporzioni */
         #char-1 { height: 38%; } /* Fabio */
         #char-2 { height: 42%; } /* Wlado */
         #char-3 { height: 42%; } /* Vincenzo */
 
-        /* COORDINATE PODIO (espresse in % per la massima compatibilità mobile) */
+        /* COORDINATE PRECISE PER TOCCARE IL PODIO */
         
         /* 1° POSTO (Centro) */
         .pos-1 {
             opacity: 1;
             left: 50%;
-            bottom: 43%; 
-            transform: translateX(-50%) scale(1.1);
+            bottom: 45%; 
+            transform: translateX(-50%);
             z-index: 10;
         }
 
         /* 2° POSTO (Sinistra) */
         .pos-2 {
             opacity: 1;
-            left: 22%;       
-            bottom: 28%;   
-            transform: translateX(-50%) scale(1);
+            left: 23%;       
+            bottom: 35%;   
+            transform: translateX(-50%);
             z-index: 9;
         }
 
         /* 3° POSTO (Destra) */
         .pos-3 {
             opacity: 1;
-            left: 78%;
-            bottom: 12%; 
-            transform: translateX(-50%) scale(0.9);
+            left: 77%;
+            bottom: 15%; 
+            transform: translateX(-50%);
             z-index: 8;
         }
 
-        /* STATO ZERO (A terra davanti al podio) */
+        /* STATO ZERO (A terra) */
         .pos-zero {
             opacity: 1;
-            bottom: 0%; /* Radente al bordo inferiore */
-            transform: translateX(-50%) scale(0.75);
+            bottom: 5%;
+            transform: translateX(-50%) scale(0.8);
             z-index: 15;
         }
 
-        /* Distribuzione orizzontale a terra per non sovrapporsi */
         #char-1.pos-zero { left: 20%; }
         #char-2.pos-zero { left: 50%; }
         #char-3.pos-zero { left: 80%; }
 
-        /* Ottimizzazione per schermi piccoli (Mobile) */
+        /* GESTIONE PAREGGIO (Spostamento laterale per non sovrapporsi) */
+        .offset-left { transform: translateX(-100%) scale(0.95); }
+        .offset-right { transform: translateX(0%) scale(0.95); }
+
         @media (max-width: 480px) {
-            .status-bar { padding: 8px 15px; }
-            .pos-1 { bottom: 42%; } /* Micro-aggiustamento per schermi stretti */
-            .pos-2 { left: 20%; bottom: 27%; }
-            .pos-3 { left: 80%; bottom: 11%; }
+            .pos-1 { bottom: 44%; }
+            .pos-2 { bottom: 34%; }
+            .pos-3 { bottom: 14%; }
         }
     </style>
 </head>
@@ -126,7 +122,7 @@
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 
-                const players = [
+                let players = [
                     { id: 'char-1', score: data.fabio },
                     { id: 'char-2', score: data.wlado },
                     { id: 'char-3', score: data.vincenzo }
@@ -135,17 +131,32 @@
                 // Ordina per punteggio decrescente
                 players.sort((a, b) => b.score - a.score);
 
-                players.forEach((p, index) => {
+                // Assegna il rango gestendo i pareggi
+                let currentRank = 1;
+                players.forEach((p, i) => {
+                    if (i > 0 && p.score < players[i-1].score) {
+                        currentRank = i + 1;
+                    }
+                    p.rank = currentRank;
+                });
+
+                players.forEach((p) => {
                     const el = document.getElementById(p.id);
                     
-                    // Reset classi precedenti
-                    el.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-zero');
+                    // Reset classi
+                    el.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-zero', 'offset-left', 'offset-right');
 
                     if (p.score > 0) {
-                        // Assegna posizione podio (1, 2, o 3)
-                        el.classList.add('pos-' + (index + 1));
+                        el.classList.add('pos-' + p.rank);
+                        
+                        // Gestione grafica pareggi (se più persone hanno lo stesso rank)
+                        const sameRankPlayers = players.filter(pl => pl.rank === p.rank && pl.score > 0);
+                        if (sameRankPlayers.length > 1) {
+                            const internalIndex = sameRankPlayers.findIndex(pl => pl.id === p.id);
+                            if (internalIndex === 0) el.classList.add('offset-left');
+                            if (internalIndex === 1) el.classList.add('offset-right');
+                        }
                     } else {
-                        // Se il punteggio è zero, posiziona a terra
                         el.classList.add('pos-zero');
                     }
                     
@@ -159,9 +170,7 @@
             }
         }
         
-        // Aggiornamento ogni 10 secondi
         setInterval(updateRank, 10000);
-        // Esecuzione immediata al caricamento
         updateRank();
     </script>
 
