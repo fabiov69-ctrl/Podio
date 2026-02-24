@@ -3,42 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Podio Dinamico - Nuova Versione</title>
+    <title>Podio Dinamico - Pro Edition con Audio</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #1a1a1a; /* Sfondo scuro per adattarsi al tema notte */
+            background-color: #1a1a1a;
             margin: 0;
             padding: 10px;
             overflow-x: hidden;
             color: white;
         }
 
-        .status-bar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            padding: 10px 20px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        /* --- SCOREBOARD --- */
+        .scoreboard {
+            display: flex;
+            gap: 15px;
             margin-bottom: 20px;
-            font-size: clamp(12px, 3vw, 14px);
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+            z-index: 101;
+        }
+
+        .score-card {
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 100;
+            padding: 10px 15px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 90px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        #card-fabio {
+            cursor: pointer;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+        #card-fabio:hover { background: rgba(255, 215, 0, 0.1); }
+        #card-fabio:active { transform: scale(0.95); }
+
+        .score-card .name { display: block; font-size: 11px; text-transform: uppercase; color: #bbb; margin-bottom: 4px; }
+        .score-card .points { display: block; font-size: 22px; font-weight: bold; color: #ffd700; }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-bottom: 10px;
+            color: #777;
         }
 
         .stage {
             position: relative;
             width: 100%;
             max-width: 900px; 
-            aspect-ratio: 1 / 1; /* Il nuovo sfondo è quadrato 1024x1024 */
+            aspect-ratio: 1 / 1;
             background-image: url('podio.jpg');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            margin: 0 auto;
         }
 
         .char {
@@ -46,68 +74,84 @@
             transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0;
             object-fit: contain;
-            object-position: bottom;
-            height: 28%; /* Dimensione ridotta per adattarsi alla scala del nuovo podio */
+            height: 28%;
         }
 
-        /* COORDINATE PRECISE PER IL NUOVO PODIO MARMOREO */
-        
-        /* 1° POSTO (Centro - Più alto e leggermente più avanti) */
-        .pos-1 {
-            opacity: 1;
-            left: 54.5%;
-            bottom: 44.5%; 
-            transform: translateX(-50%) scale(1.1);
-            z-index: 10;
-        }
-
-        /* 2° POSTO (Sinistra - Altezza media) */
-        .pos-2 {
-            opacity: 1;
-            left: 25.5%;       
-            bottom: 37.5%;   
-            transform: translateX(-50%) scale(1);
-            z-index: 9;
-        }
-
-        /* 3° POSTO (Destra - Più basso e arretrato) */
-        .pos-3 {
-            opacity: 1;
-            left: 81.5%;
-            bottom: 33.5%; 
-            transform: translateX(-50%) scale(0.95);
-            z-index: 8;
-        }
-
-        /* STATO ZERO (A terra sul prato) */
-        .pos-zero {
-            opacity: 1;
-            bottom: 12%;
-            transform: translateX(-50%) scale(0.7);
-            z-index: 15;
-        }
+        .pos-1 { opacity: 1; left: 54.5%; bottom: 44.5%; transform: translateX(-50%) scale(1.1); z-index: 10; }
+        .pos-2 { opacity: 1; left: 25.5%; bottom: 37.5%; transform: translateX(-50%) scale(1); z-index: 9; }
+        .pos-3 { opacity: 1; left: 81.5%; bottom: 33.5%; transform: translateX(-50%) scale(0.95); z-index: 8; }
+        .pos-zero { opacity: 1; bottom: 12%; transform: translateX(-50%) scale(0.7); z-index: 5; }
 
         #char-1.pos-zero { left: 20%; }
         #char-2.pos-zero { left: 50%; }
         #char-3.pos-zero { left: 80%; }
 
-        /* Gestione Pareggio */
         .offset-left { transform: translateX(-95%) scale(0.9); }
         .offset-right { transform: translateX(-5%) scale(0.9); }
 
-        /* Mobile adjustments */
-        @media (max-width: 480px) {
-            .pos-1 { bottom: 44%; }
-            .pos-2 { bottom: 37%; }
-            .pos-3 { bottom: 33%; }
+        /* --- OVERLAY VINCITORE --- */
+        #winner-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a1a;
+            z-index: 2000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.8s ease-in-out;
         }
+
+        #winner-screen img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.6);
+        }
+
+        #winner-screen h1 { color: #ffd700; margin-bottom: 20px; font-size: 24px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+
+        .close-preview {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="status-bar" id="status">Sincronizzazione...</div>
+    <audio id="audio-winner" src="winner.mp3" preload="auto"></audio>
 
-    <div class="stage">
+    <div id="winner-screen">
+        <h1 id="winner-title">VINCITORE DELLA SETTIMANA</h1>
+        <img id="winner-img" src="" alt="Vincitore">
+        <button class="close-preview" onclick="closePreview()">Chiudi e ferma musica</button>
+    </div>
+
+    <div class="status-bar" id="status">Sincronizzazione in corso...</div>
+
+    <div class="scoreboard">
+        <div class="score-card" id="card-fabio" onclick="forceFridayTransition()">
+            <span class="name">Fabio</span>
+            <span class="points" id="pts-fabio">0</span>
+        </div>
+        <div class="score-card">
+            <span class="name">Wlado</span>
+            <span class="points" id="pts-wlado">0</span>
+        </div>
+        <div class="score-card">
+            <span class="name">Vincenzo</span>
+            <span class="points" id="pts-vincenzo">0</span>
+        </div>
+    </div>
+
+    <div class="stage" id="stage-area">
         <img src="1.png" id="char-1" class="char" alt="Fabio">
         <img src="2.png" id="char-2" class="char" alt="Wlado">
         <img src="3.png" id="char-3" class="char" alt="Vincenzo">
@@ -115,39 +159,47 @@
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLOb8LZy-q4LoMWKZpslHIYVeF7UZD4imtndCw0jPRs3cWwhPk1PVfVTXLhTh2ZEzn9Q/exec";
+        let playersData = [];
+        const audio = document.getElementById('audio-winner');
 
         async function updateRank() {
             try {
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
                 
-                let players = [
-                    { id: 'char-1', score: data.fabio },
-                    { id: 'char-2', score: data.wlado },
-                    { id: 'char-3', score: data.vincenzo }
+                document.getElementById('pts-fabio').innerText = data.fabio;
+                document.getElementById('pts-wlado').innerText = data.wlado;
+                document.getElementById('pts-vincenzo').innerText = data.vincenzo;
+
+                playersData = [
+                    { id: 'char-1', score: data.fabio, name: 'Fabio', winnerImg: 'f.png' },
+                    { id: 'char-2', score: data.wlado, name: 'Wlado', winnerImg: 'w.png' },
+                    { id: 'char-3', score: data.vincenzo, name: 'Vincenzo', winnerImg: 'v.png' }
                 ];
 
-                players.sort((a, b) => b.score - a.score);
+                const ora = new Date();
+                if (ora.getDay() === 5 && ora.getHours() >= 17) {
+                    showWinner();
+                }
 
+                let sorted = [...playersData].sort((a, b) => b.score - a.score);
+                let rankMap = {};
                 let currentRank = 1;
-                players.forEach((p, i) => {
-                    if (i > 0 && p.score < players[i-1].score) {
-                        currentRank = i + 1;
-                    }
-                    p.rank = currentRank;
+                sorted.forEach((p, i) => {
+                    if (i > 0 && p.score < sorted[i-1].score) currentRank = i + 1;
+                    rankMap[p.id] = currentRank;
                 });
 
-                players.forEach((p) => {
+                playersData.forEach((p) => {
                     const el = document.getElementById(p.id);
                     el.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-zero', 'offset-left', 'offset-right');
-
                     if (p.score > 0) {
-                        el.classList.add('pos-' + p.rank);
-                        const sameRank = players.filter(pl => pl.rank === p.rank && pl.score > 0);
+                        const r = rankMap[p.id];
+                        el.classList.add('pos-' + r);
+                        const sameRank = playersData.filter(pl => rankMap[pl.id] === r && pl.score > 0);
                         if (sameRank.length > 1) {
                             const idx = sameRank.findIndex(pl => pl.id === p.id);
-                            if (idx === 0) el.classList.add('offset-left');
-                            if (idx === 1) el.classList.add('offset-right');
+                            el.classList.add(idx === 0 ? 'offset-left' : 'offset-right');
                         }
                     } else {
                         el.classList.add('pos-zero');
@@ -157,8 +209,30 @@
 
                 document.getElementById('status').innerText = "Live: " + new Date().toLocaleTimeString();
             } catch (error) {
-                document.getElementById('status').innerText = "Errore connessione.";
+                document.getElementById('status').innerText = "Errore dati.";
             }
+        }
+
+        function showWinner() {
+            if (playersData.length === 0) return;
+            const winner = [...playersData].sort((a, b) => b.score - a.score)[0];
+            
+            document.getElementById('winner-img').src = winner.winnerImg;
+            document.getElementById('winner-title').innerText = "CAMPIONE: " + winner.name.toUpperCase();
+            document.getElementById('winner-screen').style.display = 'flex';
+            
+            // Riproduci Audio
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Audio bloccato dal browser. Clicca sulla pagina per attivarlo."));
+        }
+
+        function forceFridayTransition() {
+            showWinner();
+        }
+
+        function closePreview() {
+            document.getElementById('winner-screen').style.display = 'none';
+            audio.pause(); // Ferma la musica alla chiusura
         }
         
         setInterval(updateRank, 10000);
