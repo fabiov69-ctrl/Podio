@@ -178,6 +178,7 @@
                 ];
 
                 const ora = new Date();
+                // Controllo: Venerdì (5) dalle ore 17:00 in poi
                 if (ora.getDay() === 5 && ora.getHours() >= 17) {
                     showWinner();
                 }
@@ -215,15 +216,48 @@
 
         function showWinner() {
             if (playersData.length === 0) return;
-            const winner = [...playersData].sort((a, b) => b.score - a.score)[0];
+
+            // Calcolo del punteggio massimo
+            const maxScore = Math.max(...playersData.map(p => p.score));
+            if (maxScore === 0) return;
+
+            // Filtra chi ha il punteggio massimo
+            const winners = playersData.filter(p => p.score === maxScore);
             
-            document.getElementById('winner-img').src = winner.winnerImg;
-            document.getElementById('winner-title').innerText = "CAMPIONE: " + winner.name.toUpperCase();
+            let finalImg = "";
+            let finalName = "";
+
+            if (winners.length === 1) {
+                // Singolo vincitore
+                finalImg = winners[0].winnerImg;
+                finalName = winners[0].name.toUpperCase();
+            } else if (winners.length === 2) {
+                // Pareggio a due
+                const ids = winners.map(w => w.id).sort();
+                
+                if (ids.includes('char-1') && ids.includes('char-2')) {
+                    finalImg = 'fw.png';
+                    finalName = "FABIO & WLADO";
+                } else if (ids.includes('char-1') && ids.includes('char-3')) {
+                    finalImg = 'fv.png';
+                    finalName = "FABIO & VINCENZO";
+                } else if (ids.includes('char-2') && ids.includes('char-3')) {
+                    finalImg = 'wv.png';
+                    finalName = "WLADO & VINCENZO";
+                }
+            } else if (winners.length === 3) {
+                // Pareggio a tre
+                finalImg = 'fwv.png';
+                finalName = "TUTTI CAMPIONI!";
+            }
+
+            document.getElementById('winner-img').src = finalImg;
+            document.getElementById('winner-title').innerText = "CAMPIONE: " + finalName;
             document.getElementById('winner-screen').style.display = 'flex';
             
             // Riproduci Audio
             audio.currentTime = 0;
-            audio.play().catch(e => console.log("Audio bloccato dal browser. Clicca sulla pagina per attivarlo."));
+            audio.play().catch(e => console.log("Audio bloccato."));
         }
 
         function forceFridayTransition() {
@@ -232,7 +266,7 @@
 
         function closePreview() {
             document.getElementById('winner-screen').style.display = 'none';
-            audio.pause(); // Ferma la musica alla chiusura
+            audio.pause();
         }
         
         setInterval(updateRank, 10000);
